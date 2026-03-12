@@ -66,7 +66,7 @@ export default function LoginScreen() {
           await axios.post(
             `${SUPABASE_URL}/rest/v1/users`,
             { email, phone: localUser.phone, password },
-            { headers: SUPABASE_HEADERS },
+            { headers: { ...SUPABASE_HEADERS, Prefer: "return=minimal" } },
           );
           Alert.alert("Успех", `Добро пожаловать, ${localUser.email}!`);
           login({ email: localUser.email, phone: localUser.phone ?? "" });
@@ -81,7 +81,7 @@ export default function LoginScreen() {
         }
         return;
       }
-      // Если пользователь найден в MockAPI, берем первого
+      // Если пользователь найден, берем первого
       const user = users[0];
       // Проверяем пароль
       if (user.password !== password) {
@@ -93,9 +93,9 @@ export default function LoginScreen() {
       login({ email: user.email, phone: user.phone ?? "" });
       router.replace("/(tabs)");
     } catch (err) {
-      // MockAPI недоступен, то используем локальный userService
+      // Supabase недоступен, то используем локальный userService
       if (axios.isAxiosError(err)) {
-        console.warn("MockAPI недоступен, используется локальное хранилище");
+        console.warn("Supabase недоступен, используется локальное хранилище");
 
         try {
           // Ищем пользователя в локальном хранилище
@@ -246,8 +246,14 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={{ marginTop: 20, alignItems: "center" }}
             onPress={async () => {
-              const users = await userService.loadUsers();
-              Alert.alert("Отладка", `Всего пользователей: ${users.length}`);
+              const response = await axios.get(
+                `${SUPABASE_URL}/rest/v1/users?select=email`,
+                { headers: SUPABASE_HEADERS },
+              );
+              Alert.alert(
+                "Отладка",
+                `Всего пользователей в Supabase: ${response.data.length}`,
+              );
             }}
           >
             <Text style={{ color: "#666", fontSize: 12 }}>

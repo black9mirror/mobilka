@@ -88,7 +88,7 @@ export default function RegisterScreen() {
       await axios.post(
         `${SUPABASE_URL}/rest/v1/users`,
         { email, phone, password },
-        { headers: SUPABASE_HEADERS },
+        { headers: { ...SUPABASE_HEADERS, Prefer: "return=minimal" } },
       );
 
       Alert.alert(
