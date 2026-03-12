@@ -13,9 +13,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../app/userService"; // импортируем хранилище
 
-// URL из MockAPI
-const MOCKAPI_URL = "https://69b186d2adac80b427c57934.mockapi.io/api/users";
-
+// Supabase
+const SUPABASE_URL = "https://gyxcmonztjolowohiowa.supabase.co";
+const SUPABASE_KEY = "sb_publishable_cDYOlpV0ItpmWyE6RttIEA_9Y_VSygI";
+const SUPABASE_HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+};
 export default function RegisterScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -63,11 +68,11 @@ export default function RegisterScreen() {
     setIsLoading(true); // Блокировка полей, пока заполняются данные
 
     try {
-      // Пробуем сначала MockAPI
-      const checkResponse = await axios.get(MOCKAPI_URL, {
-        params: { email },
-        timeout: 5000, // если нет ответа за 5 сек - считаем недоступным
-      });
+      // Пробуем сначала Supabase
+      const checkResponse = await axios.get(
+        `${SUPABASE_URL}/rest/v1/users?email=eq.${email}&select=email`,
+        { headers: SUPABASE_HEADERS, timeout: 5000 },
+      );
       // Если пользователь найден (массив не пустой)
       if (checkResponse.data.length > 0) {
         Alert.alert("Ошибка", "Пользователь с таким email уже существует");
@@ -79,8 +84,12 @@ export default function RegisterScreen() {
         Alert.alert("Ошибка", "Пользователь с таким email уже существует");
         return;
       }
-      // Отправляем POST-запрос для создания нового пользователя в MockAPI
-      await axios.post(MOCKAPI_URL, { email, phone, password });
+      // Отправляем POST-запрос для создания нового пользователя в Supabase
+      await axios.post(
+        `${SUPABASE_URL}/rest/v1/users`,
+        { email, phone, password },
+        { headers: SUPABASE_HEADERS },
+      );
 
       Alert.alert(
         "Успех",
@@ -88,33 +97,26 @@ export default function RegisterScreen() {
       );
       router.push("/login");
     } catch (err) {
-      // Если MockAPI недоступен, то используем локальный userService
-      if (axios.isAxiosError(err)) {
-        // Выводим предупреждение в консоль
-        console.warn("MockAPI недоступен, используется локальное хранилище");
-
-        try {
-          // Проверяем существование пользователя в локальном хранилище
-          const exists = await userService.userExists(email);
-          if (exists) {
-            Alert.alert("Ошибка", "Пользователь с таким email уже существует");
-            return;
-          }
-          // Сохраняем пользователя в локальное хранилище
-          const success = await userService.addUser({ email, phone, password });
-          if (success) {
-            Alert.alert(
-              "Успех",
-              "Регистрация выполнена успешно. Теперь необходимо авторизоваться в аккаунт.",
-            );
-            router.push("/login");
-          } else {
-            Alert.alert("Ошибка", "Не удалось зарегистрироваться");
-          }
-        } catch {
-          Alert.alert("Ошибка", "Произошла ошибка при регистрации");
+      console.warn("Supabase недоступен, используется локальное хранилище");
+      try {
+        // Проверяем существование пользователя в локальном хранилище
+        const exists = await userService.userExists(email);
+        if (exists) {
+          Alert.alert("Ошибка", "Пользователь с таким email уже существует");
+          return;
         }
-      } else {
+        // Сохраняем пользователя в локальное хранилище
+        const success = await userService.addUser({ email, phone, password });
+        if (success) {
+          Alert.alert(
+            "Успех",
+            "Регистрация выполнена успешно. Теперь необходимо авторизоваться в аккаунт.",
+          );
+          router.push("/login");
+        } else {
+          Alert.alert("Ошибка", "Не удалось зарегистрироваться");
+        }
+      } catch {
         Alert.alert("Ошибка", "Произошла ошибка при регистрации");
       }
     } finally {

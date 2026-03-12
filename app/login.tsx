@@ -14,9 +14,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../app/userService"; // импортируем хранилище
 import { useAuth } from "../context/AuthContext";
 
-// URL из MockAPI
-const MOCKAPI_URL = "https://69b186d2adac80b427c57934.mockapi.io/api/users";
-
+// Supabase
+const SUPABASE_URL = "https://gyxcmonztjolowohiowa.supabase.co";
+const SUPABASE_KEY = "sb_publishable_cDYOlpV0ItpmWyE6RttIEA_9Y_VSygI";
+const SUPABASE_HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json",
+};
 export default function LoginScreen() {
   const router = useRouter(); // Хук для навигации
   // Состояния для хранения данных из полей ввода
@@ -46,23 +51,23 @@ export default function LoginScreen() {
     setIsLoading(true); // Блокировка полей, пока заполняются данные
 
     try {
-      // Пробуем MockAPI
-      const response = await axios.get(MOCKAPI_URL, {
-        params: { email },
-        timeout: 5000, // если нет ответа за 5 сек - считаем недоступным
-      });
+      // Пробуем Supabase
+      const response = await axios.get(
+        `${SUPABASE_URL}/rest/v1/users?email=eq.${email}&select=email,phone,password`,
+        { headers: SUPABASE_HEADERS, timeout: 5000 },
+      );
       // Получаем массив пользователей
       const users = response.data;
 
       if (users.length === 0) {
         const localUser = await userService.findUser(email, password);
         if (localUser) {
-          // Нашли локально - синхронизируем: добавляем в MockAPI, чтобы в следующий раз был там
-          await axios.post(MOCKAPI_URL, {
-            email,
-            phone: localUser.phone,
-            password,
-          });
+          // Нашли локально - синхронизируем: добавляем в Supabase, чтобы в следующий раз был там
+          await axios.post(
+            `${SUPABASE_URL}/rest/v1/users`,
+            { email, phone: localUser.phone, password },
+            { headers: SUPABASE_HEADERS },
+          );
           Alert.alert("Успех", `Добро пожаловать, ${localUser.email}!`);
           login({ email: localUser.email, phone: localUser.phone ?? "" });
           router.replace("/(tabs)");
