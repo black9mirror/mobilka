@@ -3,11 +3,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFavorites } from "../../context/FavoritesContext";
 
 export default function VacancyDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-
+  const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   // Получаем данные вакансии из параметров
   const vacancy = params.vacancy ? JSON.parse(params.vacancy as string) : null;
 
@@ -22,7 +23,10 @@ export default function VacancyDetailsScreen() {
       </LinearGradient>
     );
   }
-
+  const favorited = isFavorite(vacancy.id);
+  const handleFavoriteToggle = () => {
+    favorited ? removeFavorite(vacancy.id) : addFavorite(vacancy);
+  };
   return (
     <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -37,18 +41,30 @@ export default function VacancyDetailsScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Заголовок */}
-          <Text
+          {/* Заголовок + сердечко */}
+          <View
             style={{
-              color: "white",
-              fontSize: 28,
-              fontWeight: "bold",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
               marginBottom: 10,
             }}
           >
-            {vacancy.title}
-          </Text>
-
+            <Text
+              style={{
+                color: "white",
+                fontSize: 28,
+                fontWeight: "bold",
+                flex: 1,
+                marginRight: 10,
+              }}
+            >
+              {vacancy.title}
+            </Text>
+            <TouchableOpacity onPress={handleFavoriteToggle}>
+              <Text style={{ fontSize: 28 }}>{favorited ? "❤️" : "🤍"}</Text>
+            </TouchableOpacity>
+          </View>
           {/* Компания */}
           <Text style={{ color: "#CCCCCC", fontSize: 20, marginBottom: 15 }}>
             {vacancy.company}

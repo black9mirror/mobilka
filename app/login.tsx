@@ -1,78 +1,143 @@
+import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { users } from "../store/data"; // импортируем хранилище
+import { userService } from "../app/userService"; // импортируем хранилище
+import { useAuth } from "../context/AuthContext";
+
+// URL из MockAPI
+const MOCKAPI_URL = "https://69b186d2adac80b427c57934.mockapi.io/api/users";
 
 export default function LoginScreen() {
-  const router = useRouter();
+  const router = useRouter(); // Хук для навигации
+  // Состояния для хранения данных из полей ввода
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Одна функция для обоих файлов
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  // Валидация email
   const validateEmail = (email: string) => {
-    // Паттерн для проверки email (разрешает латиницу, цифры, точки, дефисы)
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
   };
-  const handleLogin = () => {
-    // Проверка email через pattern
+  // Основной обработчик входа
+  const handleLogin = async () => {
+    // Проверка формата email
     if (!validateEmail(email)) {
       Alert.alert("Ошибка", "Введите корректный email (пример: name@mail.ru)");
       return;
     }
 
+    // Проверка заполнения пароля
     if (!password) {
       Alert.alert("Ошибка", "Введите пароль");
       return;
     }
-    // Проверяем, существует ли массив users и есть ли в нем пользователи
-    if (!users || users.length === 0) {
-      Alert.alert(
-        "Ошибка",
-        "Пользователь с такой почтой не найден. Сначала зарегистрируйтесь.",
-      );
-      return;
+
+    setIsLoading(true); // Блокировка полей, пока заполняются данные
+
+    try {
+      // Пробуем MockAPI
+      const response = await axios.get(MOCKAPI_URL, {
+        params: { email },
+        timeout: 5000, // если нет ответа за 5 сек - считаем недоступным
+      });
+      // Получаем массив пользователей
+      const users = response.data;
+
+      if (users.length === 0) {
+        const localUser = await userService.findUser(email, password);
+        if (localUser) {
+          // Нашли локально - синхронизируем: добавляем в MockAPI, чтобы в следующий раз был там
+          await axios.post(MOCKAPI_URL, {
+            email,
+            phone: localUser.phone,
+            password,
+          });
+          Alert.alert("Успех", `Добро пожаловать, ${localUser.email}!`);
+          login({ email: localUser.email, phone: localUser.phone ?? "" });
+          router.replace("/(tabs)");
+        } else {
+          const exists = await userService.userExists(email);
+          if (exists) {
+            Alert.alert("Ошибка", "Неверный пароль");
+          } else {
+            Alert.alert("Ошибка", "Пользователь не найден. Зарегистрируйтесь.");
+          }
+        }
+        return;
+      }
+      // Если пользователь найден в MockAPI, берем первого
+      const user = users[0];
+      // Проверяем пароль
+      if (user.password !== password) {
+        Alert.alert("Ошибка", "Неверный пароль");
+        return;
+      }
+
+      Alert.alert("Успех", `Добро пожаловать, ${user.email}!`);
+      login({ email: user.email, phone: user.phone ?? "" });
+      router.replace("/(tabs)");
+    } catch (err) {
+      // MockAPI недоступен, то используем локальный userService
+      if (axios.isAxiosError(err)) {
+        console.warn("MockAPI недоступен, используется локальное хранилище");
+
+        try {
+          // Ищем пользователя в локальном хранилище
+          const user = await userService.findUser(email, password);
+
+          if (user) {
+            Alert.alert("Успех", `Добро пожаловать, ${user.email}!`);
+            router.replace("/(tabs)");
+          } else {
+            const exists = await userService.userExists(email);
+            if (exists) {
+              Alert.alert("Ошибка", "Неверный пароль");
+            } else {
+              Alert.alert(
+                "Ошибка",
+                "Пользователь с таким email не найден. Сначала зарегистрируйтесь.",
+              );
+            }
+          }
+        } catch {
+          // Ошибка при работе с локальным хранилищем
+          Alert.alert("Ошибка", "Произошла ошибка при входе");
+        }
+      } else {
+        // Любая другая ошибка (не связанная с axios)
+        Alert.alert("Ошибка", "Произошла ошибка при входе");
+      }
+    } finally {
+      // В любом случае разблокируем интерфейс
+      setIsLoading(false);
     }
-
-    // Ищем пользователя
-    const user = users.find((u) => u.email === email);
-
-    if (!user) {
-      Alert.alert("Ошибка", "Пользователь с таким email не найден");
-      return;
-    }
-
-    // Проверяем пароль
-    if (user.password !== password) {
-      Alert.alert("Ошибка", "Неверный пароль");
-      return;
-    }
-
-    // Все хорошо
-    Alert.alert("Успех", `Добро пожаловать, ${user.email}!`);
-    router.replace("/(tabs)");
   };
-
   return (
     <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 20, flex: 1, justifyContent: "center" }}>
-          {/* Логотип */}
           <View style={{ alignItems: "center", marginBottom: 40 }}>
             <Text
               style={{
-                fontSize: 48,
+                fontSize: 60,
                 fontWeight: "200",
-                color: "#FFFFFF",
-                letterSpacing: 8,
-                marginBottom: 20,
+                color: "white",
+                letterSpacing: 5,
               }}
             >
-              SSrch
+              SSRCH
             </Text>
-
             <Text
               style={{
                 color: "#CCCCCC",
@@ -110,10 +175,11 @@ export default function LoginScreen() {
               }}
               value={email}
               onChangeText={setEmail}
-              placeholder="your@email.ru"
+              placeholder="name@mail.ru"
               placeholderTextColor="#666"
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!isLoading}
             />
           </View>
 
@@ -134,31 +200,53 @@ export default function LoginScreen() {
               placeholder="введите пароль"
               placeholderTextColor="#666"
               secureTextEntry
+              editable={!isLoading}
             />
           </View>
 
           {/* Кнопка входа */}
           <TouchableOpacity
             style={{
-              backgroundColor: "white",
+              backgroundColor: isLoading ? "#666" : "white",
               padding: 18,
               borderRadius: 8,
               alignItems: "center",
             }}
             onPress={handleLogin}
+            disabled={isLoading}
           >
-            <Text style={{ color: "#2A2A2A", fontSize: 16, fontWeight: "600" }}>
-              ВОЙТИ
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color="#2A2A2A" />
+            ) : (
+              <Text
+                style={{ color: "#2A2A2A", fontSize: 16, fontWeight: "600" }}
+              >
+                ВОЙТИ
+              </Text>
+            )}
           </TouchableOpacity>
 
           {/* Ссылка на регистрацию */}
           <TouchableOpacity
             style={{ marginTop: 20, alignItems: "center" }}
             onPress={() => router.push("/")}
+            disabled={isLoading}
           >
             <Text style={{ color: "#CCCCCC" }}>
               Нет аккаунта? Зарегистрироваться
+            </Text>
+          </TouchableOpacity>
+
+          {/* Кнопка для отладки */}
+          <TouchableOpacity
+            style={{ marginTop: 20, alignItems: "center" }}
+            onPress={async () => {
+              const users = await userService.loadUsers();
+              Alert.alert("Отладка", `Всего пользователей: ${users.length}`);
+            }}
+          >
+            <Text style={{ color: "#666", fontSize: 12 }}>
+              Показать количество пользователей
             </Text>
           </TouchableOpacity>
         </View>
