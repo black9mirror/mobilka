@@ -1,9 +1,11 @@
 import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Text,
   TextInput,
@@ -12,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFavorites } from "../../context/FavoritesContext";
-
+import { useTheme } from "../../context/ThemeContext";
 // Интерфейс вакансии
 interface Vacancy {
   id: string;
@@ -71,6 +73,7 @@ const mapHHVacancy = (item: HHVacancy): Vacancy => ({
 export default function VacanciesScreen() {
   const router = useRouter();
   const { isFavorite } = useFavorites();
+  const { colors } = useTheme(); // Получаем цвета из темы
   const [searchText, setSearchText] = useState("");
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [isLoading, setIsLoading] = useState(false); // Флаг первой загрузки
@@ -79,6 +82,84 @@ export default function VacanciesScreen() {
   const [totalFound, setTotalFound] = useState(0); // Всего найдено вакансий
   const [currentPage, setCurrentPage] = useState(0); // Текущая загруженная страница
   const [hasMore, setHasMore] = useState(false); // Есть ли еще страницы для загрузки
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [currentLocation, setCurrentLocation] = useState<string | null>(null);
+
+  // Поиск вакансий по текущему местоположению
+  const searchByLocation = async () => {
+    setIsLocationLoading(true);
+    setError(null);
+
+    try {
+      // Запрашиваем разрешение на геолокацию
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        Alert.alert(
+          "Нет разрешения",
+          "Для поиска вакансий рядом необходимо разрешить доступ к геолокации",
+        );
+        setIsLocationLoading(false);
+        return;
+      }
+
+      // Получаем текущие координаты
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+
+      // Преобразуем координаты в название города
+      const reverseGeocode = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude,
+      });
+
+      let cityName = "";
+      if (reverseGeocode.length > 0) {
+        cityName =
+          reverseGeocode[0].city ||
+          reverseGeocode[0].district ||
+          reverseGeocode[0].region ||
+          "Россия";
+      }
+
+      setCurrentLocation(cityName);
+      setSearchText(cityName);
+
+      // Выполняем поиск по городу
+      if (cityName.trim()) {
+        setIsLoading(true);
+        setError(null);
+        setVacancies([]);
+        setCurrentPage(0);
+        setHasMore(false);
+
+        try {
+          const response = await axios.get(HH_API_URL, {
+            params: { text: cityName, per_page: PER_PAGE, page: 0, area: 113 },
+            headers: { "User-Agent": "SSrch/1.0 (mardanov1207@mail.ru)" },
+          });
+
+          const mapped = response.data.items.map(mapHHVacancy);
+          setVacancies(mapped);
+          setTotalFound(response.data.found);
+          setHasMore(response.data.pages > 1);
+        } catch (err) {
+          if (axios.isAxiosError(err)) {
+            setError(`Ошибка: ${err.response?.status ?? "нет соединения"}`);
+          } else {
+            setError("Неизвестная ошибка");
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    } catch (err) {
+      console.error("Ошибка геолокации:", err);
+      Alert.alert("Ошибка", "Не удалось определить местоположение");
+    } finally {
+      setIsLocationLoading(false);
+    }
+  };
 
   // Первый поиск — сбрасывает список и страницу
   const fetchVacancies = async () => {
@@ -151,12 +232,12 @@ export default function VacanciesScreen() {
   const renderVacancy = ({ item }: { item: Vacancy }) => (
     <TouchableOpacity
       style={{
-        backgroundColor: "#3A3A3A",
+        backgroundColor: colors.card,
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: "#555",
+        borderColor: colors.cardBorder,
       }}
       onPress={() =>
         router.push({
@@ -175,7 +256,7 @@ export default function VacanciesScreen() {
       >
         <Text
           style={{
-            color: "white",
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: "600",
             flex: 1,
@@ -195,14 +276,14 @@ export default function VacanciesScreen() {
           marginBottom: 5,
         }}
       >
-        <Text style={{ color: "#CCCCCC" }}>{item.company}</Text>
-        <Text style={{ color: "#4CAF50", fontWeight: "500" }}>
+        <Text style={{ color: colors.textSecondary }}>{item.company}</Text>
+        <Text style={{ color: colors.accent, fontWeight: "500" }}>
           {item.salary}
         </Text>
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={{ color: "#999999" }}>🏢 {item.city}</Text>
-        <Text style={{ color: "#999999" }}>💼 {item.experience}</Text>
+        <Text style={{ color: colors.textTertiary }}>🏢 {item.city}</Text>
+        <Text style={{ color: colors.textTertiary }}>💼 {item.experience}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -213,22 +294,22 @@ export default function VacanciesScreen() {
     return (
       <TouchableOpacity
         style={{
-          backgroundColor: "#3A3A3A",
+          backgroundColor: colors.card,
           padding: 15,
           borderRadius: 8,
           alignItems: "center",
           marginTop: 5,
           marginBottom: 20,
           borderWidth: 1,
-          borderColor: "#555",
+          borderColor: colors.cardBorder,
         }}
         onPress={loadMore}
         disabled={isLoadingMore}
       >
         {isLoadingMore ? (
-          <ActivityIndicator size="small" color="#CCCCCC" />
+          <ActivityIndicator size="small" color={colors.textSecondary} />
         ) : (
-          <Text style={{ color: "#CCCCCC", fontWeight: "500" }}>
+          <Text style={{ color: colors.textSecondary, fontWeight: "500" }}>
             Загрузить ещё
           </Text>
         )}
@@ -237,12 +318,12 @@ export default function VacanciesScreen() {
   };
 
   return (
-    <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
+    <LinearGradient colors={colors.background} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 20, flex: 1 }}>
           <Text
             style={{
-              color: "white",
+              color: colors.textPrimary,
               fontSize: 28,
               fontWeight: "200",
               marginBottom: 20,
@@ -251,31 +332,71 @@ export default function VacanciesScreen() {
             Поиск вакансий
           </Text>
 
+          {/* Кнопка геопоиска */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: isLocationLoading
+                ? colors.textMuted
+                : colors.accent,
+              padding: 12,
+              borderRadius: 8,
+              alignItems: "center",
+              marginBottom: 15,
+              flexDirection: "row",
+              justifyContent: "center",
+              gap: 8,
+            }}
+            onPress={searchByLocation}
+            disabled={isLocationLoading}
+          >
+            {isLocationLoading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Text style={{ fontSize: 16 }}>📍</Text>
+                <Text
+                  style={{ color: "white", fontSize: 14, fontWeight: "600" }}
+                >
+                  Найти рядом со мной
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Информация о текущем местоположении */}
+          {currentLocation && (
+            <Text
+              style={{ color: colors.accent, marginBottom: 10, fontSize: 12 }}
+            >
+              📍 Поиск по городу: {currentLocation}
+            </Text>
+          )}
+
           {/* Поиск + кнопка */}
           <View style={{ flexDirection: "row", marginBottom: 20, gap: 10 }}>
             <TextInput
               style={{
                 flex: 1,
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 paddingVertical: 12,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
                 fontSize: 16,
                 height: 50,
               }}
               value={searchText}
               onChangeText={setSearchText}
               placeholder="🔎︎ Поиск"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               returnKeyType="search"
               onSubmitEditing={fetchVacancies}
             />
             <TouchableOpacity
               style={{
-                backgroundColor: "white",
+                backgroundColor: colors.accentButton,
                 borderRadius: 8,
                 paddingHorizontal: 18,
                 justifyContent: "center",
@@ -284,7 +405,11 @@ export default function VacanciesScreen() {
               onPress={fetchVacancies}
               disabled={isLoading}
             >
-              <Text style={{ color: "#2A2A2A", fontWeight: "600" }}>Найти</Text>
+              <Text
+                style={{ color: colors.accentButtonText, fontWeight: "600" }}
+              >
+                Найти
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -297,15 +422,17 @@ export default function VacanciesScreen() {
                 marginBottom: 10,
               }}
             >
-              <ActivityIndicator size="small" color="#CCCCCC" />
-              <Text style={{ color: "#CCCCCC", marginLeft: 8 }}>
+              <ActivityIndicator size="small" color={colors.textSecondary} />
+              <Text style={{ color: colors.textSecondary, marginLeft: 8 }}>
                 Загрузка...
               </Text>
             </View>
           ) : error ? (
-            <Text style={{ color: "#FF6B6B", marginBottom: 10 }}>{error}</Text>
+            <Text style={{ color: colors.error, marginBottom: 10 }}>
+              {error}
+            </Text>
           ) : vacancies.length > 0 ? (
-            <Text style={{ color: "#CCCCCC", marginBottom: 10 }}>
+            <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
               Найдено: {totalFound.toLocaleString()} · показано:{" "}
               {vacancies.length}
             </Text>
@@ -315,14 +442,14 @@ export default function VacanciesScreen() {
           <FlatList
             data={vacancies}
             renderItem={renderVacancy}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
             showsVerticalScrollIndicator={false}
             ListFooterComponent={renderFooter}
             ListEmptyComponent={
               !isLoading ? (
                 <Text
                   style={{
-                    color: "#CCCCCC",
+                    color: colors.textSecondary,
                     textAlign: "center",
                     marginTop: 50,
                   }}

@@ -4,6 +4,7 @@ import React from "react";
 import { FlatList, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFavorites } from "../../context/FavoritesContext";
+import { useTheme } from "../../context/ThemeContext";
 
 interface Vacancy {
   id: string;
@@ -18,6 +19,7 @@ interface Vacancy {
 
 export default function FavoritesScreen() {
   const router = useRouter();
+  const { colors } = useTheme(); // Получаем цвета из темы
   // Получаем данные и функции из глобального контекста избранного
   // favorites - массив сохраненных вакансий
   // removeFavorite - функция для удаления из избранного
@@ -26,12 +28,12 @@ export default function FavoritesScreen() {
   const renderItem = ({ item }: { item: Vacancy }) => (
     <View
       style={{
-        backgroundColor: "#3A3A3A",
+        backgroundColor: colors.card,
         padding: 15,
         borderRadius: 10,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: "#555",
+        borderColor: colors.cardBorder,
       }}
     >
       <View
@@ -52,7 +54,13 @@ export default function FavoritesScreen() {
             })
           }
         >
-          <Text style={{ color: "white", fontSize: 18, fontWeight: "600" }}>
+          <Text
+            style={{
+              color: colors.textPrimary,
+              fontSize: 18,
+              fontWeight: "600",
+            }}
+          >
             {item.title}
           </Text>
         </TouchableOpacity>
@@ -69,25 +77,25 @@ export default function FavoritesScreen() {
           marginBottom: 5,
         }}
       >
-        <Text style={{ color: "#CCCCCC" }}>{item.company}</Text>
-        <Text style={{ color: "#4CAF50", fontWeight: "500" }}>
+        <Text style={{ color: colors.textSecondary }}>{item.company}</Text>
+        <Text style={{ color: colors.accent, fontWeight: "500" }}>
           {item.salary}
         </Text>
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text style={{ color: "#999999" }}>🏢 {item.city}</Text>
-        <Text style={{ color: "#999999" }}>💼 {item.experience}</Text>
+        <Text style={{ color: colors.textTertiary }}>🏢 {item.city}</Text>
+        <Text style={{ color: colors.textTertiary }}>💼 {item.experience}</Text>
       </View>
     </View>
   );
 
   return (
-    <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
+    <LinearGradient colors={colors.background} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 20, flex: 1 }}>
           <Text
             style={{
-              color: "white",
+              color: colors.textPrimary,
               fontSize: 28,
               fontWeight: "200",
               marginBottom: 20,
@@ -96,7 +104,7 @@ export default function FavoritesScreen() {
             Избранное
           </Text>
 
-          <Text style={{ color: "#CCCCCC", marginBottom: 10 }}>
+          <Text style={{ color: colors.textSecondary, marginBottom: 10 }}>
             Сохранено вакансий: {favorites.length}
           </Text>
 
@@ -108,7 +116,7 @@ export default function FavoritesScreen() {
             ListEmptyComponent={
               <Text
                 style={{
-                  color: "#CCCCCC",
+                  color: colors.textSecondary,
                   textAlign: "center",
                   marginTop: 50,
                 }}

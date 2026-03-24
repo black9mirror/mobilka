@@ -1,13 +1,13 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function WelcomeScreen() {
+  const { colors } = useTheme(); // Получаем цвета из темы
+
   return (
-    <LinearGradient
-      colors={["#2A2A2A", "#3A3A3A", "#2A2A2A"]}
-      style={{ flex: 1 }}
-    >
+    <LinearGradient colors={colors.background} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <View
           style={{
@@ -29,7 +29,7 @@ export default function WelcomeScreen() {
                 style={{
                   fontSize: 80,
                   fontWeight: "300",
-                  color: "#FFFFFF",
+                  color: colors.textPrimary,
                   opacity: 0.9,
                   letterSpacing: -5,
                   transform: [{ skewX: "-5deg" }],
@@ -41,7 +41,7 @@ export default function WelcomeScreen() {
                 style={{
                   fontSize: 80,
                   fontWeight: "300",
-                  color: "#FFFFFF",
+                  color: colors.textPrimary,
                   opacity: 0.7,
                   letterSpacing: -5,
                   transform: [{ skewX: "-5deg" }],
@@ -54,7 +54,7 @@ export default function WelcomeScreen() {
                 style={{
                   fontSize: 80,
                   fontWeight: "300",
-                  color: "#FFFFFF",
+                  color: colors.textPrimary,
                   opacity: 0.5,
                   letterSpacing: -5,
                   transform: [{ skewX: "-5deg" }],
@@ -70,7 +70,7 @@ export default function WelcomeScreen() {
               style={{
                 width: 100,
                 height: 2,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.textPrimary,
                 opacity: 0.3,
                 marginTop: 10,
                 marginBottom: 5,
@@ -80,7 +80,7 @@ export default function WelcomeScreen() {
             <Text
               style={{
                 fontSize: 14,
-                color: "#A0A0A0",
+                color: colors.textTertiary,
                 letterSpacing: 4,
                 fontWeight: "300",
                 marginTop: 5,
@@ -95,7 +95,7 @@ export default function WelcomeScreen() {
             style={{
               fontSize: 48,
               fontWeight: "200",
-              color: "#FFFFFF",
+              color: colors.textPrimary,
               letterSpacing: 8,
               marginBottom: 20,
             }}
@@ -108,7 +108,7 @@ export default function WelcomeScreen() {
             <Text
               style={{
                 fontSize: 16,
-                color: "#D0D0D0",
+                color: colors.textSecondary,
                 textAlign: "center",
                 lineHeight: 24,
                 marginBottom: 8,
@@ -122,7 +122,7 @@ export default function WelcomeScreen() {
               style={{
                 width: 40,
                 height: 1,
-                backgroundColor: "#FFFFFF",
+                backgroundColor: colors.textPrimary,
                 opacity: 0.3,
                 marginVertical: 15,
               }}
@@ -130,7 +130,7 @@ export default function WelcomeScreen() {
             <Text
               style={{
                 fontSize: 14,
-                color: "#A0A0A0",
+                color: colors.textTertiary,
                 textAlign: "center",
                 lineHeight: 20,
                 fontStyle: "italic",
@@ -139,6 +139,7 @@ export default function WelcomeScreen() {
               AI-ассистент для рекрутинга
             </Text>
           </View>
+
           {/* Дополнительная информация */}
           <View
             style={{
@@ -150,7 +151,7 @@ export default function WelcomeScreen() {
             <Text
               style={{
                 fontSize: 10,
-                color: "#666666",
+                color: colors.textMuted,
                 letterSpacing: 1,
               }}
             >

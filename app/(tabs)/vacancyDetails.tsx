@@ -4,20 +4,24 @@ import React from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFavorites } from "../../context/FavoritesContext";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function VacancyDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { colors } = useTheme(); // Получаем цвета из темы
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   // Получаем данные вакансии из параметров
   const vacancy = params.vacancy ? JSON.parse(params.vacancy as string) : null;
 
   if (!vacancy) {
     return (
-      <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
+      <LinearGradient colors={colors.background} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
           <View style={{ padding: 20 }}>
-            <Text style={{ color: "white" }}>Вакансия не найдена</Text>
+            <Text style={{ color: colors.textPrimary }}>
+              Вакансия не найдена
+            </Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -28,7 +32,7 @@ export default function VacancyDetailsScreen() {
     favorited ? removeFavorite(vacancy.id) : addFavorite(vacancy);
   };
   return (
-    <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
+    <LinearGradient colors={colors.background} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20 }}>
           {/* Кнопка назад */}
@@ -36,7 +40,7 @@ export default function VacancyDetailsScreen() {
             style={{ marginBottom: 20 }}
             onPress={() => router.push("/(tabs)/vacancies")}
           >
-            <Text style={{ color: "#CCCCCC", fontSize: 16 }}>
+            <Text style={{ color: colors.textSecondary, fontSize: 16 }}>
               ← Назад к списку
             </Text>
           </TouchableOpacity>
@@ -52,7 +56,7 @@ export default function VacancyDetailsScreen() {
           >
             <Text
               style={{
-                color: "white",
+                color: colors.textPrimary,
                 fontSize: 28,
                 fontWeight: "bold",
                 flex: 1,
@@ -65,18 +69,27 @@ export default function VacancyDetailsScreen() {
               <Text style={{ fontSize: 28 }}>{favorited ? "❤️" : "🤍"}</Text>
             </TouchableOpacity>
           </View>
+
           {/* Компания */}
-          <Text style={{ color: "#CCCCCC", fontSize: 20, marginBottom: 15 }}>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: 20,
+              marginBottom: 15,
+            }}
+          >
             {vacancy.company}
           </Text>
 
           {/* Основная информация */}
           <View
             style={{
-              backgroundColor: "#3A3A3A",
+              backgroundColor: colors.card,
               padding: 15,
               borderRadius: 10,
               marginBottom: 20,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
             }}
           >
             <View
@@ -86,8 +99,10 @@ export default function VacancyDetailsScreen() {
                 marginBottom: 10,
               }}
             >
-              <Text style={{ color: "#CCCCCC" }}>💰 Заработная плата:</Text>
-              <Text style={{ color: "#4CAF50", fontWeight: "500" }}>
+              <Text style={{ color: colors.textSecondary }}>
+                💰 Заработная плата:
+              </Text>
+              <Text style={{ color: colors.accent, fontWeight: "500" }}>
                 {vacancy.salary}
               </Text>
             </View>
@@ -98,14 +113,18 @@ export default function VacancyDetailsScreen() {
                 marginBottom: 10,
               }}
             >
-              <Text style={{ color: "#CCCCCC" }}>🏢 Город:</Text>
-              <Text style={{ color: "white" }}>{vacancy.city}</Text>
+              <Text style={{ color: colors.textSecondary }}>🏢 Город:</Text>
+              <Text style={{ color: colors.textPrimary }}>{vacancy.city}</Text>
             </View>
             <View
               style={{ flexDirection: "row", justifyContent: "space-between" }}
             >
-              <Text style={{ color: "#CCCCCC" }}>💼 Требования к опыту:</Text>
-              <Text style={{ color: "white" }}>{vacancy.experience}</Text>
+              <Text style={{ color: colors.textSecondary }}>
+                💼 Требования к опыту:
+              </Text>
+              <Text style={{ color: colors.textPrimary }}>
+                {vacancy.experience}
+              </Text>
             </View>
           </View>
 
@@ -113,7 +132,7 @@ export default function VacancyDetailsScreen() {
           <View style={{ marginBottom: 20 }}>
             <Text
               style={{
-                color: "white",
+                color: colors.textPrimary,
                 fontSize: 18,
                 fontWeight: "600",
                 marginBottom: 10,
@@ -121,7 +140,7 @@ export default function VacancyDetailsScreen() {
             >
               Описание вакансии
             </Text>
-            <Text style={{ color: "#CCCCCC", lineHeight: 22 }}>
+            <Text style={{ color: colors.textSecondary, lineHeight: 22 }}>
               {vacancy.description}
             </Text>
           </View>
@@ -130,7 +149,7 @@ export default function VacancyDetailsScreen() {
           <View style={{ marginBottom: 30 }}>
             <Text
               style={{
-                color: "white",
+                color: colors.textPrimary,
                 fontSize: 18,
                 fontWeight: "600",
                 marginBottom: 10,
@@ -143,8 +162,10 @@ export default function VacancyDetailsScreen() {
                 key={index}
                 style={{ flexDirection: "row", marginBottom: 8 }}
               >
-                <Text style={{ color: "#4CAF50", marginRight: 10 }}>•</Text>
-                <Text style={{ color: "#CCCCCC", flex: 1 }}>{req}</Text>
+                <Text style={{ color: colors.accent, marginRight: 10 }}>•</Text>
+                <Text style={{ color: colors.textSecondary, flex: 1 }}>
+                  {req}
+                </Text>
               </View>
             ))}
           </View>
@@ -152,7 +173,7 @@ export default function VacancyDetailsScreen() {
           {/* Кнопка отклика */}
           <TouchableOpacity
             style={{
-              backgroundColor: "white",
+              backgroundColor: colors.accentButton,
               padding: 18,
               borderRadius: 8,
               alignItems: "center",
@@ -160,7 +181,13 @@ export default function VacancyDetailsScreen() {
             }}
             onPress={() => alert("Отклик отправлен!")}
           >
-            <Text style={{ color: "#2A2A2A", fontSize: 16, fontWeight: "600" }}>
+            <Text
+              style={{
+                color: colors.accentButtonText,
+                fontSize: 16,
+                fontWeight: "600",
+              }}
+            >
               ОТКЛИКНУТЬСЯ
             </Text>
           </TouchableOpacity>

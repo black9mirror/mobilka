@@ -5,18 +5,23 @@ import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-
+  const { colors } = useTheme(); // Получаем цвета из контекста темы
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: colors.textMuted, // Цвет неактивных иконок
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
-          backgroundColor: "#2A2A2A",
+          backgroundColor: colors.backgroundSolid, // Фон панели из темы
+          borderTopWidth: 0,
+          elevation: 0,
+          shadowOpacity: 0,
         },
       }}
     >
@@ -61,7 +66,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="vacancyDetails"
         options={{
-          href: null, // скрываем экран из нижней навигации
+          href: null,
         }}
       />
     </Tabs>

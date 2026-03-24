@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../app/userService"; // импортируем хранилище
+import ThemeToggle from "../components/ThemeToggle";
+import { useTheme } from "../context/ThemeContext";
 
 // Supabase
 const SUPABASE_URL = "https://gyxcmonztjolowohiowa.supabase.co";
@@ -23,6 +25,7 @@ const SUPABASE_HEADERS = {
 };
 export default function RegisterScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -125,15 +128,16 @@ export default function RegisterScreen() {
   };
 
   return (
-    <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
+    <LinearGradient colors={colors.background} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 20, flex: 1, justifyContent: "center" }}>
+          {/* Логотип */}
           <View style={{ alignItems: "center", marginBottom: 40 }}>
             <Text
               style={{
                 fontSize: 60,
                 fontWeight: "200",
-                color: "white",
+                color: colors.textPrimary,
                 letterSpacing: 5,
               }}
             >
@@ -141,7 +145,7 @@ export default function RegisterScreen() {
             </Text>
             <Text
               style={{
-                color: "#CCCCCC",
+                color: colors.textSecondary,
                 fontSize: 14,
                 letterSpacing: 2,
                 marginTop: 5,
@@ -153,7 +157,7 @@ export default function RegisterScreen() {
 
           <Text
             style={{
-              color: "white",
+              color: colors.textPrimary,
               fontSize: 24,
               marginBottom: 30,
               textAlign: "center",
@@ -164,20 +168,22 @@ export default function RegisterScreen() {
 
           {/* Email */}
           <View style={{ marginBottom: 15 }}>
-            <Text style={{ color: "#CCCCCC", marginBottom: 5 }}>Email *</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+              Email *
+            </Text>
             <TextInput
               style={{
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
               }}
               value={email}
               onChangeText={setEmail}
               placeholder="name@mail.ru"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               keyboardType="email-address"
               autoCapitalize="none"
               editable={!isLoading}
@@ -186,20 +192,22 @@ export default function RegisterScreen() {
 
           {/* Телефон */}
           <View style={{ marginBottom: 15 }}>
-            <Text style={{ color: "#CCCCCC", marginBottom: 5 }}>Телефон *</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+              Телефон *
+            </Text>
             <TextInput
               style={{
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
               }}
               value={phone}
               onChangeText={setPhone}
               placeholder="+79696452415"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               keyboardType="phone-pad"
               editable={!isLoading}
             />
@@ -207,20 +215,22 @@ export default function RegisterScreen() {
 
           {/* Пароль */}
           <View style={{ marginBottom: 15 }}>
-            <Text style={{ color: "#CCCCCC", marginBottom: 5 }}>Пароль *</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+              Пароль *
+            </Text>
             <TextInput
               style={{
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
               }}
               value={password}
               onChangeText={setPassword}
               placeholder="минимум 6 символов"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               secureTextEntry
               editable={!isLoading}
             />
@@ -228,22 +238,22 @@ export default function RegisterScreen() {
 
           {/* Подтверждение пароля */}
           <View style={{ marginBottom: 25 }}>
-            <Text style={{ color: "#CCCCCC", marginBottom: 5 }}>
+            <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
               Подтверждение пароля *
             </Text>
             <TextInput
               style={{
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
               }}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               placeholder="повторите пароль"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               secureTextEntry
               editable={!isLoading}
             />
@@ -252,7 +262,9 @@ export default function RegisterScreen() {
           {/* Кнопка регистрации */}
           <TouchableOpacity
             style={{
-              backgroundColor: isLoading ? "#666" : "white",
+              backgroundColor: isLoading
+                ? colors.textMuted
+                : colors.accentButton,
               padding: 18,
               borderRadius: 8,
               alignItems: "center",
@@ -261,10 +273,14 @@ export default function RegisterScreen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#2A2A2A" />
+              <ActivityIndicator color={colors.accentButtonText} />
             ) : (
               <Text
-                style={{ color: "#2A2A2A", fontSize: 16, fontWeight: "600" }}
+                style={{
+                  color: colors.accentButtonText,
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
               >
                 ЗАРЕГИСТРИРОВАТЬСЯ
               </Text>
@@ -277,8 +293,13 @@ export default function RegisterScreen() {
             onPress={() => router.push("/login")}
             disabled={isLoading}
           >
-            <Text style={{ color: "#CCCCCC" }}>Уже есть аккаунт? Войти</Text>
+            <Text style={{ color: colors.textSecondary }}>
+              Уже есть аккаунт? Войти
+            </Text>
           </TouchableOpacity>
+
+          {/* Кнопка переключения темы */}
+          <ThemeToggle />
         </View>
       </SafeAreaView>
     </LinearGradient>

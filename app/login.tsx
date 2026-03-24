@@ -12,7 +12,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { userService } from "../app/userService"; // импортируем хранилище
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 // Supabase
 const SUPABASE_URL = "https://gyxcmonztjolowohiowa.supabase.co";
@@ -24,6 +26,7 @@ const SUPABASE_HEADERS = {
 };
 export default function LoginScreen() {
   const router = useRouter(); // Хук для навигации
+  const { colors } = useTheme(); // Получаем цвета из темы
   // Состояния для хранения данных из полей ввода
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -129,15 +132,16 @@ export default function LoginScreen() {
     }
   };
   return (
-    <LinearGradient colors={["#2A2A2A", "#3A3A3A"]} style={{ flex: 1 }}>
+    <LinearGradient colors={colors.background} style={{ flex: 1 }}>
       <SafeAreaView style={{ flex: 1 }}>
         <View style={{ padding: 20, flex: 1, justifyContent: "center" }}>
+          {/* Логотип */}
           <View style={{ alignItems: "center", marginBottom: 40 }}>
             <Text
               style={{
                 fontSize: 60,
                 fontWeight: "200",
-                color: "white",
+                color: colors.textPrimary,
                 letterSpacing: 5,
               }}
             >
@@ -145,7 +149,7 @@ export default function LoginScreen() {
             </Text>
             <Text
               style={{
-                color: "#CCCCCC",
+                color: colors.textSecondary,
                 fontSize: 14,
                 letterSpacing: 2,
                 marginTop: 5,
@@ -157,7 +161,7 @@ export default function LoginScreen() {
 
           <Text
             style={{
-              color: "white",
+              color: colors.textPrimary,
               fontSize: 24,
               marginBottom: 30,
               textAlign: "center",
@@ -168,20 +172,22 @@ export default function LoginScreen() {
 
           {/* Email */}
           <View style={{ marginBottom: 15 }}>
-            <Text style={{ color: "#CCCCCC", marginBottom: 5 }}>Email</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+              Email
+            </Text>
             <TextInput
               style={{
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
               }}
               value={email}
               onChangeText={setEmail}
               placeholder="name@mail.ru"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               keyboardType="email-address"
               autoCapitalize="none"
               editable={!isLoading}
@@ -190,20 +196,22 @@ export default function LoginScreen() {
 
           {/* Пароль */}
           <View style={{ marginBottom: 25 }}>
-            <Text style={{ color: "#CCCCCC", marginBottom: 5 }}>Пароль</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 5 }}>
+              Пароль
+            </Text>
             <TextInput
               style={{
-                backgroundColor: "#3A3A3A",
-                color: "white",
+                backgroundColor: colors.inputBackground,
+                color: colors.textPrimary,
                 padding: 15,
                 borderRadius: 8,
                 borderWidth: 1,
-                borderColor: "#555",
+                borderColor: colors.inputBorder,
               }}
               value={password}
               onChangeText={setPassword}
               placeholder="введите пароль"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.inputPlaceholder}
               secureTextEntry
               editable={!isLoading}
             />
@@ -212,7 +220,9 @@ export default function LoginScreen() {
           {/* Кнопка входа */}
           <TouchableOpacity
             style={{
-              backgroundColor: isLoading ? "#666" : "white",
+              backgroundColor: isLoading
+                ? colors.textMuted
+                : colors.accentButton,
               padding: 18,
               borderRadius: 8,
               alignItems: "center",
@@ -221,10 +231,14 @@ export default function LoginScreen() {
             disabled={isLoading}
           >
             {isLoading ? (
-              <ActivityIndicator color="#2A2A2A" />
+              <ActivityIndicator color={colors.accentButtonText} />
             ) : (
               <Text
-                style={{ color: "#2A2A2A", fontSize: 16, fontWeight: "600" }}
+                style={{
+                  color: colors.accentButtonText,
+                  fontSize: 16,
+                  fontWeight: "600",
+                }}
               >
                 ВОЙТИ
               </Text>
@@ -237,29 +251,13 @@ export default function LoginScreen() {
             onPress={() => router.push("/")}
             disabled={isLoading}
           >
-            <Text style={{ color: "#CCCCCC" }}>
+            <Text style={{ color: colors.textSecondary }}>
               Нет аккаунта? Зарегистрироваться
             </Text>
           </TouchableOpacity>
 
-          {/* Кнопка для отладки */}
-          <TouchableOpacity
-            style={{ marginTop: 20, alignItems: "center" }}
-            onPress={async () => {
-              const response = await axios.get(
-                `${SUPABASE_URL}/rest/v1/users?select=email`,
-                { headers: SUPABASE_HEADERS },
-              );
-              Alert.alert(
-                "Отладка",
-                `Всего пользователей в Supabase: ${response.data.length}`,
-              );
-            }}
-          >
-            <Text style={{ color: "#666", fontSize: 12 }}>
-              Показать количество пользователей
-            </Text>
-          </TouchableOpacity>
+          {/* Кнопка переключения темы */}
+          <ThemeToggle />
         </View>
       </SafeAreaView>
     </LinearGradient>
